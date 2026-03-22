@@ -6,6 +6,28 @@ import ChatMessage from "./components/ChatMessage";
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);
 
+  // format chat history for API request
+  const generateBotResponse = async (history) => {
+    history = history.map(({role, text}) => ({ role, parts:[{text}]}));
+
+    const requestOptions = {
+      method: "POST",
+      header: {"Content-Type" : "application/json" },
+      body: JSON.stringify({contents: history})
+    };
+
+    try {
+      // Make the API call to get the bot's response
+      const response = await fetch(import.meta.env.VITE_API_URL,requestOptions);
+      const data = await response.json();
+      if(!response.ok) throw new Error(data.error.message || "Something went wrong!" );
+
+      console.log(data);
+    }catch(error){
+      console.log(error);
+    }
+  };
+
   return <div className="container">
     <div className="chatbot-popup">
       {/* Chatbot Header */}
@@ -35,7 +57,7 @@ const App = () => {
 
       {/* Chatbot Footer */}
       <div className="chat-footer">
-        <ChatForm setChatHistory ={setChatHistory} />
+        <ChatForm chatHistory={chatHistory} setChatHistory ={setChatHistory}generateBotResponse={generateBotResponse} />
       </div>
     </div>
   </div>;
