@@ -4,7 +4,7 @@ import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
 
 const App = () => {
-  const [chatHistory, setChatHistory] = useState([]);
+    const [chatHistory, setChatHistory] = useState([]);
 
   // format chat history for API request
   const generateBotResponse = async (history) => {
@@ -18,13 +18,36 @@ const App = () => {
 
     try {
       // Make the API call to get the bot's response
-      const response = await fetch(import.meta.env.VITE_API_URL,requestOptions);
+      const response = await fetch(import.meta.env.VITE_API_URL, requestOptions);
       const data = await response.json();
       if(!response.ok) throw new Error(data.error.message || "Something went wrong!" );
 
-      console.log(data);
-    }catch(error){
-      console.log(error);
+      // ✅ ดึง text จาก API response ของ Gemini
+      const botMessage = data.candidates[0].content.parts[0].text;
+      
+      // ✅ อัปเดต chatHistory ด้วย bot's response จริง
+      // แทนที่ "Thinking..." message ด้วยคำตอบจริง
+      setChatHistory((prevHistory) => {
+        const updatedHistory = [...prevHistory];
+        updatedHistory[updatedHistory.length - 1] = {
+          role: "model",
+          text: botMessage
+        };
+        return updatedHistory;
+      });
+
+    } catch(error) {
+      console.error("Error:", error);
+      
+      // ✅ แสดง error message ใน UI แทนที่ "Thinking..."
+      setChatHistory((prevHistory) => {
+        const updatedHistory = [...prevHistory];
+        updatedHistory[updatedHistory.length - 1] = {
+          role: "model",
+          text: "Sorry, something went wrong. Please try again."
+        };
+        return updatedHistory;
+      });
     }
   };
 
@@ -57,7 +80,7 @@ const App = () => {
 
       {/* Chatbot Footer */}
       <div className="chat-footer">
-        <ChatForm chatHistory={chatHistory} setChatHistory ={setChatHistory}generateBotResponse={generateBotResponse} />
+        <ChatForm chatHistory={chatHistory} setChatHistory={setChatHistory} generateBotResponse={generateBotResponse}/>
       </div>
     </div>
   </div>;
