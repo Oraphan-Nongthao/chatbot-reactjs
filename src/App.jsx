@@ -12,7 +12,7 @@ const App = () => {
 
     const requestOptions = {
       method: "POST",
-      header: {"Content-Type" : "application/json" },
+      headers: {"Content-Type" : "application/json" },
       body: JSON.stringify({contents: history})
     };
 
