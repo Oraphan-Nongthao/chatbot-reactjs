@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatbotIcon from "./components/ChatbotIcon";
 import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
+import { companyInfo } from "./companyInfo";
 
 const App = () => {
-    const [chatHistory, setChatHistory] = useState([]);
-
+  const [chatHistory, setChatHistory] = useState([]);
+  const [showChatbot, setShowChatbot] = useState(false);
+  const chatBodyRef = useRef();
   // format chat history for API request
   const generateBotResponse = async (history) => {
     history = history.map(({role, text}) => ({ role, parts:[{text}]}));
@@ -22,10 +24,10 @@ const App = () => {
       const data = await response.json();
       if(!response.ok) throw new Error(data.error.message || "Something went wrong!" );
 
-      // ✅ ดึง text จาก API response ของ Gemini
+      // ดึง text จาก API response ของ Gemini
       const botMessage = data.candidates[0].content.parts[0].text;
       
-      // ✅ อัปเดต chatHistory ด้วย bot's response จริง
+      // อัปเดต chatHistory ด้วย bot's response จริง
       // แทนที่ "Thinking..." message ด้วยคำตอบจริง
       setChatHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
@@ -39,7 +41,7 @@ const App = () => {
     } catch(error) {
       console.error("Error:", error);
       
-      // ✅ แสดง error message ใน UI แทนที่ "Thinking..."
+      // แสดง error message ใน UI แทนที่ "Thinking..."
       setChatHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
         updatedHistory[updatedHistory.length - 1] = {
@@ -51,7 +53,18 @@ const App = () => {
     }
   };
 
-  return <div className="container">
+  useEffect(() => {
+    // เลื่อน chat body ลงด้านล่างสุดเมื่อมีข้อความใหม่เข้ามา
+    chatBodyRef.current.scrollTo({top: chatBodyRef.current.scrollHeight, behavior: "smooth"});
+  }, [chatHistory]);
+
+  return <div className={`container ${showChatbot ? " show-chatbot" : ""}`}>
+    <button onClick={() => setShowChatbot((prev) => !prev)} 
+    id="chatbot-toggler">
+      <span className="material-symbols-rounded">mode_comment</span>
+      <span className="material-symbols-rounded">close</span>
+    </button>
+
     <div className="chatbot-popup">
       {/* Chatbot Header */}
       <div className="chatbot-header">
@@ -59,12 +72,13 @@ const App = () => {
           <ChatbotIcon />
           <h2 className="logo-text">Chatbot</h2>
         </div>
-        <button className="material-symbols-rounded">keyboard_arrow_down</button>
+        <button onClick={() => setShowChatbot((prev) => !prev)}
+        className="material-symbols-rounded">keyboard_arrow_down</button>
 
       </div>
     
       {/* Chatbot Body */}
-      <div className="chat-body">
+      <div ref={chatBodyRef} className="chat-body">
         <div className="message bot-message">
           <ChatbotIcon />
         <p className="message-text">
